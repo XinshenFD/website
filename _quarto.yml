@@ -1,0 +1,15 @@
+project:
+  type: website
+  output-dir: _site
+
+format:
+  html:
+    grid: 
+      body-width: 1300px
+    theme: lumen
+filters:
+  - shinylive
+
+
+
+

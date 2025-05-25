@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.31">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Xinshen">
+<meta name="dcterms.date" content="2025-05-17">
+
+<title>Risk Stratification and IOL Power Calculation Tool for Marfan Syndrome Patients with Ectopia Lentis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-2b1c6ac74930e8ccf1be4ba7c1ca8bfb.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<meta name="shinylive:serviceworker_dir" content=".">
+<script src="site_libs/quarto-contrib/shinylive-0.9.1/shinylive/load-shinylive-sw.js" type="module"></script>
+<script src="site_libs/quarto-contrib/shinylive-0.9.1/shinylive/run-python-blocks.js" type="module"></script>
+<link href="site_libs/quarto-contrib/shinylive-0.9.1/shinylive/shinylive.css" rel="stylesheet">
+<link href="site_libs/quarto-contrib/shinylive-quarto-css/shinylive-quarto.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Risk Stratification and IOL Power Calculation Tool for Marfan Syndrome Patients with Ectopia Lentis</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Xinshen </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">May 17, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<pre class="shinylive-r" data-engine="r"><code>#| '!! shinylive warning !!': |
+#|   shinylive does not work in self-contained HTML documents.
+#|   Please set `embed-resources: false` in your metadata.
+#| standalone: true
+#| viewerHeight: 2000
+library(bslib)
+library(shiny)
+library(gt)
+library(tidyverse)
+library(magick)
+library(shinyjs)
+library(DT)
+library(ggplot2)
+
+#####IOL power calculation
+######predicted ALP
+ALP_min24 &lt;- function(AL, K1, K2){
+  Km &lt;- 2/(1/K1 + 1/K2)
+  CCR &lt;- 337.5/Km
+  ALP &lt;- 0.26755 *AL -0.35626 * CCR +1.56317
+  return(ALP)
+}
+##IOL : PCB00/ZCB00 = 1
+##Procedure :MCTR = 1
+ALP_maj24 &lt;- function(WTW, Age, IOL, Procedure){
+  ALP &lt;- 0.190810 * WTW + 0.007952 * Age + 0.297651 * IOL - 0.263585 * Procedure
+  return(ALP)
+}
+
+#####predicted ELP
+ELP_min24 &lt;- function(ALP, AL, K1, K2, WTW){
+  Km &lt;- 2/(1/K1 + 1/K2)
+  CCR &lt;- 337.5/Km
+  H &lt;- CCR - ((CCR)^2 - ((WTW - 1)/2)^2)^(1/2)
+  ELP &lt;- ALP *0.45967 + H * 0.79294 + AL *0.27593 -0.23519 *CCR -3.49273
+  return(ELP)
+}
+
+
+ELP_maj24 &lt;- function(ALP, AL, K1, K2){
+  Km &lt;- 2/(1/K1 + 1/K2)
+  CCR &lt;- 337.5/Km
+  
+  ELP &lt;- ALP * 0.7368 + 0.3152 * AL -0.5416 * CCR -1.5633
+  return(ELP)
+}
+
+####adjust AL
+
+AL_optimized_min24 &lt;- function(AL){
+  AL_O &lt;- 1.10766 * AL - 2.17799
+  return(AL_O)
+}
+
+AL_optimized_maj24 &lt;- function(AL){
+  AL_O &lt;- 0.99574 * AL + 0.53407
+  return(AL_O)
+}
+
+#######MFFF
+
+refraction &lt;- function(IOL_power, K1, K2, ELP,  AL){
+  na &lt;- 1.336
+  nc &lt;- 1.333
+  ncm1 &lt;- nc - 1
+  K &lt;- 2/(1/K1 + 1/K2)
+  V &lt;- 0.012
+  R &lt;- (337.5/K)
+  R &lt;- R*0.001
+  ELP &lt;- ELP* 0.001
+  AL &lt;- AL*0.001
+  m &lt;- na/(AL - ELP) - IOL_power
+  mm &lt;- na/m + ELP
+  mmm &lt;- na/mm - (ncm1/R)
+  mmmm &lt;- 1/mmm + V
+  ref &lt;- 1/mmmm
+  return(ref)
+}
+######calculate IOL power
+
+IOL_power_ref_0 &lt;- function(K1, K2, ELP,  AL){
+  na &lt;- 1.336
+  nc &lt;- 1.333
+  ncm1 &lt;- nc - 1
+  K &lt;- 2/(1/K1 + 1/K2)
+  V &lt;- 0.012
+  R &lt;- (337.5/K)
+  R &lt;- R*0.001
+  ELP &lt;- ELP* 0.001
+  AL &lt;- AL*0.001
+  aa &lt;- (na/(AL - ELP))
+  bb &lt;- na/(na/(ncm1/R) - ELP)
+  P &lt;- aa - bb
+  return(P)
+}
+
+IOL_power_ref &lt;- function(ref, K1, K2, ELP,  AL){
+  na &lt;- 1.336
+  nc &lt;- 1.333
+  ncm1 &lt;- nc - 1
+  K &lt;- 2/(1/K1 + 1/K2)
+  V &lt;- 0.012
+  R &lt;- (337.5/K)
+  R &lt;- R*0.001
+  ELP &lt;- ELP* 0.001
+  AL &lt;- AL*0.001
+  aa &lt;- (na/(AL - ELP))
+  cc &lt;- ncm1/R + 1/(1/ref - V)
+  bb &lt;- na/(na/cc - ELP)
+  P &lt;- aa - bb
+  return(P)
+}
+
+
+####T2_optimizAL
+refraction_T2 &lt;- function(IOL_power, K1, K2, A,  AL, AL_O){
+  na &lt;- 1.336
+  nc &lt;- 1.333
+  ncm1 &lt;- nc - 1
+  K &lt;- 2/(1/K1 + 1/K2)
+  V &lt;- 0.012
+  R &lt;- (337.5/K)
+  
+  L &lt;- AL
+  ifelse(
+    L &lt;= 24.2,
+    LCOR &lt;- L,
+    ifelse(L &lt;36.2,
+           LCOR &lt;- 1.716*L-3.446-0.0237*L*L,
+           LCOR &lt;- 27.62)
+  )
+  H &lt;- -10.326 + 0.32630 * AL + 0.13533 * K
+  ACDcon &lt;- 0.62467*A - 68.747
+  offset_SRTK &lt;- ACDcon - 3.336
+  ACDest &lt;- (H + offset_SRTK) * 0.001
+  ACDest &lt;- ACDest 
+  rethick &lt;- 0.65696 - 0.02020 * L
+  LOPT &lt;- (L + rethick) * 0.001
+  R &lt;- R *0.001
+  AL_O &lt;- AL_O * 0.001
+  m &lt;- na/(AL_O - ACDest) - IOL_power
+  mm &lt;- na/m + ACDest
+  mmm &lt;- na/mm - ncm1/R
+  mmmm &lt;- 1/mmm + V
+  ref &lt;- 1/mmmm
+  return(ref)
+}
+######calculate IOL power
+
+IOL_power_ref_0_T2 &lt;- function(K1, K2, A, AL_O,  AL){
+  na &lt;- 1.336
+  nc &lt;- 1.333
+  ncm1 &lt;- nc - 1
+  K &lt;- 2/(1/K1 + 1/K2)
+  V &lt;- 0.012
+  R &lt;- (337.5/K)
+  
+  L &lt;- AL
+  ifelse(
+    L &lt;= 24.2,
+    LCOR &lt;- L,
+    ifelse(L &lt;36.2,
+           LCOR &lt;- 1.716*L-3.446-0.0237*L*L,
+           LCOR &lt;- 27.62)
+  )
+  H &lt;- -10.326 + 0.32630 * AL + 0.13533 * K
+  ACDcon &lt;- 0.62467*A - 68.747
+  offset_SRTK &lt;- ACDcon - 3.336
+  ACDest &lt;- (H + offset_SRTK) * 0.001
+  ACDest &lt;- ACDest 
+  rethick &lt;- 0.65696 - 0.02020 * L
+  LOPT &lt;- (L + rethick) * 0.001
+  R &lt;- R *0.001
+  ELP &lt;- ACDest
+  AL_O &lt;- AL_O * 0.001
+  aa &lt;- (na/(AL_O - ELP))
+  bb &lt;- na/(na/(ncm1/R) - ELP)
+  P &lt;- aa - bb
+  return(P)
+}
+
+IOL_power_ref_T2 &lt;- function(ref, K1, K2, AL_O, A,  AL){
+  na &lt;- 1.336
+  nc &lt;- 1.333
+  ncm1 &lt;- nc - 1
+  K &lt;- 2/(1/K1 + 1/K2)
+  V &lt;- 0.012
+  R &lt;- (337.5/K)
+  
+  L &lt;- AL
+  ifelse(
+    L &lt;= 24.2,
+    LCOR &lt;- L,
+    ifelse(L &lt;36.2,
+           LCOR &lt;- 1.716*L-3.446-0.0237*L*L,
+           LCOR &lt;- 27.62)
+  )
+  H &lt;- -10.326 + 0.32630 * AL + 0.13533 * K
+  ACDcon &lt;- 0.62467*A - 68.747
+  offset_SRTK &lt;- ACDcon - 3.336
+  ACDest &lt;- (H + offset_SRTK) * 0.001
+  ACDest &lt;- ACDest 
+  rethick &lt;- 0.65696 - 0.02020 * L
+  LOPT &lt;- (L + rethick) * 0.001
+  R &lt;- R *0.001
+  ELP &lt;- ACDest
+  AL_O &lt;- AL_O * 0.001
+  aa &lt;- (na/(AL_O - ELP))
+  cc &lt;- ncm1/R + 1/(1/ref - V)
+  bb &lt;- na/(na/cc - ELP)
+  P &lt;- aa - bb
+  return(P)
+}
+
+Z_AL &lt;- function(Age, AL){
+  aget &lt;- Age
+  alt &lt;- AL
+  Z_AL &lt;- NA
+  Z_AL &lt;- ifelse(aget &gt;= 18,
+                 (alt - 24.50)/1.03,
+                 ifelse(aget &gt;= 17,
+                        (alt - 24.58)/1.14,
+                        ifelse(aget &gt;= 16,
+                               (alt - 24.65)/1.22,
+                               ifelse(aget&gt;= 15,
+                                      (alt - 24.50)/1.21,
+                                      ifelse(aget&gt;=14,
+                                             (alt - 24.41)/1.30,
+                                             ifelse(aget&gt;=13,
+                                                    (alt - 24.10)/1.17,
+                                                    ifelse(aget&gt;= 12,
+                                                           (alt - 23.94)/1.08,
+                                                           ifelse(aget&gt;= 11,
+                                                                  (alt - 23.77)/1.03,
+                                                                  ifelse(aget&gt;= 10,
+                                                                         (alt - 23.58)/1.01,
+                                                                         ifelse(
+                                                                           aget&gt;= 9,
+                                                                           (alt - 23.34)/0.89,
+                                                                           ifelse(
+                                                                             aget&gt;=8,
+                                                                             (alt - 23.06)/0.88,
+                                                                             ifelse(
+                                                                               aget&gt;=7,
+                                                                               (alt - 22.76)/0.79,
+                                                                               ifelse(
+                                                                                 aget&gt;=6,
+                                                                                 (alt - 22.49)/0.75,
+                                                                                 ifelse(
+                                                                                   aget&gt;=5,
+                                                                                   (alt - 22.31)/0.68,
+                                                                                   ifelse(
+                                                                                     aget&gt;=4,
+                                                                                     (alt - 22.15)/0.72,
+                                                                                     ifelse(
+                                                                                       aget&gt;=3,
+                                                                                       (alt - 22.10)/0.72,
+                                                                                       cccc &lt;- 1
+                                                                                     )
+                                                                                   )
+                                                                                 )
+                                                                               )
+                                                                               
+                                                                             )
+                                                                           )
+                                                                         )
+                                                                  )
+                                                           )
+                                                    )
+                                             )
+                                             
+                                      ))
+                        )
+                 ))
+  return(Z_AL)
+  
+}
+
+
+clustertree &lt;- function(Age, Z_AL, AL, Apex, CCR){
+  cluster &lt;- NA
+  cluster &lt;- ifelse(Age &lt;12 &amp; Z_AL &lt;1.5 &amp; CCR &lt;8.5,
+                    "A",
+                    ifelse(Age &lt;12 &amp; Z_AL &lt;1.5 &amp; CCR &gt;= 8.5 &amp; Apex &gt;=526,
+                           "A",
+                           ifelse(Age &lt;12 &amp; Z_AL &lt;1.5 &amp; CCR &gt;= 8.5 &amp; Apex &lt;526,
+                                  "B",
+                                  ifelse(Age &lt;12 &amp; Z_AL &gt;= 1.5 &amp; Z_AL &gt;= 9,
+                                         "D",
+                                         ifelse(Age &lt;12 &amp; Z_AL &gt;= 2.6 &amp; Z_AL &lt; 9 ,
+                                                "B",
+                                                ifelse(Age &lt;12 &amp; Z_AL &gt;= 1.5 &amp; Z_AL &lt; 2.6 &amp;CCR&lt;8.1,
+                                                       "A",
+                                                       ifelse(
+                                                         Age &lt;12 &amp; Z_AL &gt;= 1.5 &amp; Z_AL &lt; 2.6 &amp;CCR&gt;=8.1 &amp;Apex &gt;= 577,
+                                                         "A",
+                                                         ifelse(Age &lt;12 &amp; Z_AL &gt;= 1.5 &amp; Z_AL &lt; 2.6 &amp;CCR&gt;=8.1 &amp;Apex &lt; 577,
+                                                                "B",
+                                                                ifelse(
+                                                                  Age &gt;= 12 &amp; AL &lt;28,
+                                                                  "C",
+                                                                  "D"
+                                                                )
+                                                                
+                                                         )
+                                                       )
+                                                       
+                                                )
+                                                
+                                         )
+                                         
+                                  )
+                           )
+                    ))
+  return(cluster)
+}
+
+# Define UI for application that draws a histogram
+
+gender_female_male &lt;- c("Female", "Male")
+eye_side &lt;- c("Right", "Left")
+procedures &lt;- c("MCTR", "CTR-CH", "SF-IOL")
+
+ui &lt;- page_fixed(
+  useShinyjs(),
+  tags$style(    "
+    html, body {
+    max-width: 1300px; /* 设置页面最大宽度 */
+    margin: auto; /* 居中 */
+    width: 100%; /* 确保宽度为 100% */
+    }
+    "),
+  layout_columns(
+    col_widths = c(4, 8),
+    card(
+      style = "margin-top: 10px;", # 添加底部间距
+      full_screen = TRUE,
+      imageOutput("img1_ui"),
+      style = "height: 300px; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;"
+    ),
+    card_body(
+      # 使用 HTML 和 CSS 来设置字号、居中、首行缩进和两侧对齐
+      HTML(
+        '&lt;div style="text-align: justify; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 15px;"&gt;
+            &lt;p style="text-indent: 20px; font-size: 18px; line-height: 1.6;"&gt;
+              Welcome to the &lt;b&gt;MFS with EL Clustering Tool!&lt;/b&gt; This website provides an innovative platform for risk stratification and treatment decision-making for patients with &lt;b&gt;Marfan syndrome&lt;/b&gt; and &lt;b&gt;ectopia lentis&lt;/b&gt;. Based on data from the EL cohort, our research leverages machine learning to identify &lt;b&gt;four distinct clinical phenotypes&lt;/b&gt;, offering valuable insights into prognosis and therapeutic response. By integrating real-world data and combining it with published &lt;a href="https://pubmed.ncbi.nlm.nih.gov/39663600/" target="_blank"&gt;IOL power calculation tools&lt;/a&gt;, the platform supports clinicians in tailoring personalized treatment strategies, including postoperative &lt;b&gt;PCO risk estimation&lt;/b&gt; and &lt;b&gt;IOL power calculation&lt;/b&gt;.
+            &lt;/p&gt;
+          &lt;/div&gt;'
+      )
+    )
+  )
+  ,
+  card(
+    full_screen = TRUE,
+    card_body(
+      fluidRow(
+        column(4, textInput("name", label = span("Patient's name", class = "label custom-input"), value = "")),
+        column(4, dateInput("dob", label = span("Patient's birthday", class = "label custom-input"), value = "1993-12-22")),
+        column(4, selectInput("Gender", label = span("Patient's gender", class = "label custom-input"), gender_female_male))
+      ),
+      fluidRow(
+        column(4, selectInput("eyeside", label = span("Laterality",  class = "label custom-input"), eye_side)),
+        column(4, textInput("surger", label = span("Doctor's name",  class = "label custom-input"), value = "")),
+        column(4, dateInput("Sob", label = span("Surgery date",  class = "label custom-input"), value = "2025-5-15"))
+      ),
+      fluidRow(
+        column(4, numericInput("AL", label = span("AL (mm)",  class = "label custom-input"), value = "24.03", step = 0.01)),
+        column(4, numericInput("WTW", label = span("WTW (mm)",  class = "label custom-input"), value = "12.32", step = 0.01)),
+        column(4, numericInput("APEX", label = span("APEX (µm)",  class = "label custom-input"), value = "553",step = 1))
+      ),
+      fluidRow(
+        column(4, numericInput("K1", label = span("K1 (D)",  class = "label custom-input"), value = "41.21",step = 0.01)),
+        column(4, numericInput("K2", label = span("K2 (D)",  class = "label custom-input"), value = "42.33",step = 0.01)),
+        column(4, numericInput("ref", label = span("Target refraction (D)",  class = "label custom-input"), value = "-1",step = 0.01))
+      ),
+      fluidRow(
+        column(4,offset = 2, selectInput("procedure",label = span( "Procedure",  class = "label custom-input"),choices = c("MCTR", "CTR-CH",
+                                                                                                                           "SF-IOL"))),
+        column(4, selectInput("IOL_type",label = span( "IOL",  class = "label custom-input"), 
+                              choices = c("DCB00/ICB00/ZCB00", "SN60AT/SN60WF","Rayner 920H/970C"))
+        )
+      )))
+  ,
+  card(
+    actionButton("cal", label = span("Extimate cluster and calculate IOL power",class = "label custom-input"), class = "btn-success",
+                 icon = shiny::icon("calculator"))
+  ),
+  tags$div(
+    id = "plot_div",
+    style = "display:none;",
+    
+    layout_columns(
+      col_widths = c(4, 8),
+      card(
+        div(
+          style = "display: flex; justify-content: center; align-items: center; height: 100%;",
+          uiOutput("words_cluster")
+        )
+      ),
+      card(
+        div(
+          style = "display: flex; justify-content: center; align-items: center; height: 100%;",  
+          imageOutput("PCO_sur", inline = TRUE)
+        )
+      )
+    )
+  ),
+  tags$div(
+    style = "display: flex; justify-content: center; align-items: center; height: 100%;",
+    uiOutput("conditional_layout")
+  )
+)
+
+
+
+server &lt;- function(input, output, session) {
+
+  rdata_file1 &lt;- tempfile(fileext = ".png")  # Specify file extension for clarity
+  correct_url1 &lt;- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup1.png"
+  # Attempt download with corrected URL
+  download.file(correct_url1, destfile = rdata_file1, mode = "wb")
+  img1 &lt;- image_read(rdata_file1)
+  img1 &lt;- image_ggplot(img1)
+  
+  rdata_file3 &lt;- tempfile(fileext = ".png")  # Specify file extension for clarity
+  correct_url3 &lt;- "https://github.com/XinshenFD/data-save/blob/main/Logo-Department.png?raw=true"
+  # Attempt download with corrected URL
+  download.file(correct_url3, destfile = rdata_file3, mode = "wb")
+  img3 &lt;- image_read(rdata_file3)
+  img3 &lt;- image_ggplot(img3)
+  
+  rdata_file2 &lt;- tempfile(fileext = ".png")  # Specify file extension for clarity
+  correct_url2 &lt;- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup2.png"
+  # Attempt download with corrected URL
+  download.file(correct_url2, destfile = rdata_file2, mode = "wb")
+  img2 &lt;- image_read(rdata_file2)
+  img2 &lt;- image_ggplot(img2)
+  
+  observeEvent(input$procedure, {
+    if (input$procedure %in% c("MCTR", "CTR-CH")) {
+      # If the first input is A or B, update second input to D and E
+      updateSelectInput(session, "IOL_type", choices = c("DCB00/ICB00/ZCB00", "SN60AT/SN60WF"))
+    } else if (input$procedure == "SF-IOL") {
+      # If the first input is C, update second input to F
+      updateSelectInput(session, "IOL_type", choices = "Rayner 920H/970C")
+    }
+  })
+  observeEvent(input$cal, {
+    
+    shinyjs::show(id = "plot_div")
+  })
+  
+  
+  calculateValues &lt;- eventReactive(input$cal, {
+    
+    if(input$Gender == "Female") {
+      gg &lt;- 0
+    } else {
+      gg &lt;- 1
+    }
+    
+    today &lt;- Sys.Date()
+    dob &lt;- as.Date(input$dob)
+    surgery_date &lt;- as.Date(input$Sob)
+    aa &lt;- as.numeric(difftime(surgery_date, dob, units = "days")) / 365.25
+    ccrz &lt;- 337.5/(2/(1/input$K1 + 1/input$K2))
+    # 执行全部计算逻辑，并将结果作为列表返回
+    ALP_M_P = if(input$AL &gt; 24) {
+      ALP_maj24(WTW = input$WTW, Age = aa, IOL = 1,  Procedure = 1)
+    } else {
+      ALP_min24(AL = input$AL, K1 = input$K1, K2 = input$K2 )
+    }
+    
+    ALP_M_S = if(input$AL &gt; 24) {
+      ALP_maj24(WTW = input$WTW, Age = aa, IOL = 0,  Procedure = 1)
+    } else {
+      ALP_min24(AL = input$AL, K1 = input$K1, K2 = input$K2 )
+    }
+    
+    ALP_C_P = if(input$AL &gt; 24) {
+      ALP_maj24(WTW = input$WTW, Age = aa, IOL = 1,  Procedure = 0)
+    } else {
+      ALP_min24(AL = input$AL, K1 = input$K1, K2 = input$K2 )
+    }
+    
+    ALP_C_S = if(input$AL &gt; 24) {
+      ALP_maj24(WTW = input$WTW, Age = aa, IOL = 0,  Procedure = 0)
+    } else {
+      ALP_min24(AL = input$AL, K1 = input$K1, K2 = input$K2 )
+    }
+    
+    
+    ELP_M_P = if(input$AL &gt; 24) {
+      ELP_maj24(ALP = ALP_M_P, AL = input$AL, K1 = input$K1, K2 = input$K2)
+    } else {
+      ELP_min24(ALP = ALP_M_P, AL = input$AL, K1 = input$K1, K2 = input$K2,
+                WTW = input$WTW)
+    }
+    
+    ELP_M_S = if(input$AL &gt; 24) {
+      ELP_maj24(ALP = ALP_M_S, AL = input$AL, K1 = input$K1, K2 = input$K2)
+    } else {
+      ELP_min24(ALP = ALP_M_S, AL = input$AL, K1 = input$K1, K2 = input$K2,
+                WTW = input$WTW)
+    }
+    
+    ELP_C_P = if(input$AL &gt; 24) {
+      ELP_maj24(ALP = ALP_C_P, AL = input$AL, K1 = input$K1, K2 = input$K2)
+    } else {
+      ELP_min24(ALP = ALP_C_P, AL = input$AL, K1 = input$K1, K2 = input$K2,
+                WTW = input$WTW)
+    }
+    
+    ELP_C_S = if(input$AL &gt; 24) {
+      ELP_maj24(ALP = ALP_C_S, AL = input$AL, K1 = input$K1, K2 = input$K2)
+    } else {
+      ELP_min24(ALP = ALP_C_S, AL = input$AL, K1 = input$K1, K2 = input$K2,
+                WTW = input$WTW)
+    }
+    
+    AL_optimized = if(input$AL &gt; 24) {
+      AL_optimized_maj24(AL = input$AL)
+    } else {
+      AL_optimized_min24(AL = input$AL)
+    }
+    
+    ZAL = Z_AL(Age = aa,
+               AL = input$AL)
+    clus = clustertree(AL = input$AL,
+                       Z_AL = ZAL,
+                       Age = aa,
+                       Apex = input$APEX,
+                       CCR = ccrz
+    )
+    
+    return(list(
+      ALP_M_P = ALP_M_P,
+      ALP_M_S = ALP_M_S,
+      ALP_C_P = ALP_C_P,
+      ALP_C_S = ALP_C_S,
+      ELP_M_P = ELP_M_P,
+      ELP_M_S = ELP_M_S,
+      ELP_C_P = ELP_C_P,
+      ELP_C_S = ELP_C_S,
+      AL_optimized = AL_optimized,
+      aa = aa,
+      ZAL = ZAL,
+      clus = clus
+    ))
+  }
+  )
+  
+  table_reactive &lt;- eventReactive(input$cal,{
+    values &lt;- calculateValues()
+    aa &lt;- values$aa
+    clus &lt;- values$clus
+    
+    if(aa &lt;= 15){
+      if(clus == "A"){
+        AL_15 &lt;- 1.67 * log10(aa +0.6) +21.71
+      }else{
+        if(clus == "B"){
+          AL_15 &lt;- 7.2 * log10(aa +0.6) +19.69
+        }else{
+          AL_15 &lt;- input$AL
+        }
+      }
+    }else(
+      AL_15 &lt;- input$AL
+    )
+    
+    if(AL_15 &gt; 24) {
+      AL_optimized_15 &lt;-AL_optimized_maj24(AL = AL_15)
+    } else {
+      AL_optimized_15 &lt;-AL_optimized_min24(AL = AL_15)
+    }
+    table_M_S &lt;- data.frame(x = c(NA, NA, NA, NA, NA, NA), 
+                            y = NA, z = NA, d = NA, e = NA, 
+                            f = NA, g =NA, t = NA, n = NA)
+    colnames(table_M_S) &lt;- c("IOL", "IOL Power", "Refraction",
+                             "AL", "K1", "K2", "WTW", "Gender", "ELP")
+    table_M_S$IOL &lt;- "SN60AT/SN60WT"
+    table_M_S$AL &lt;- input$AL
+    table_M_S$K1 &lt;- input$K1
+    table_M_S$K2 &lt;- input$K2
+    table_M_S$WTW &lt;- input$WTW
+    table_M_S$Gender &lt;- input$Gender
+    table_M_S$ELP &lt;- values$ELP_M_S
+    
+    IOLPref0_M_S &lt;- IOL_power_ref_0(AL = input$AL,
+                                    K1 = input$K1,
+                                    K2 = input$K2,
+                                    ELP = values$ELP_M_S)
+    
+    table_M_S[6, 2] &lt;- IOLPref0_M_S 
+    
+    table_M_S[6, 3] &lt;- 0 
+    
+    if(input$ref == 0){
+      
+      med_IOLP_M_S &lt;- as.numeric((round(IOLPref0_M_S/0.5))*0.5)
+      
+      M_S_list &lt;- c(med_IOLP_M_S +1, med_IOLP_M_S+0.5, med_IOLP_M_S, med_IOLP_M_S-0.5,med_IOLP_M_S-1)
+      
+      table_M_S[1:5, 2] &lt;- M_S_list
+      
+      table_M_S[1:5, 3] &lt;- refraction(
+        IOL_power = table_M_S[1:5, 2],
+        K1 = table_M_S[1:5, 5],
+        K2 = table_M_S[1:5, 6],
+        ELP = table_M_S[1:5, 9],  
+        AL = table_M_S[1:5, 4])}else{
+          
+          IOLP_M_S_ref &lt;-   IOL_power_ref(
+            ref = input$ref,
+            K1 = input$K1,
+            K2 = input$K2,
+            ELP = values$ELP_M_S,
+            AL = input$AL
+          )
+          
+          med_IOLP_M_S &lt;- as.numeric((round(IOLP_M_S_ref/0.5))*0.5)
+          
+          M_S_list &lt;- c(med_IOLP_M_S +1, med_IOLP_M_S+0.5, med_IOLP_M_S, med_IOLP_M_S-0.5,med_IOLP_M_S-1)
+          
+          table_M_S[1:5, 2] &lt;- M_S_list
+          
+          table_M_S[1:5, 3] &lt;- refraction(
+            IOL_power = table_M_S[1:5, 2],
+            K1 = table_M_S[1:5, 5],
+            K2 = table_M_S[1:5, 6],
+            ELP = table_M_S[1:5, 9],  
+            AL = table_M_S[1:5, 4])}
+    
+    tableM_S &lt;- table_M_S
+    
+    tableM_S &lt;- tableM_S[, 2:3]
+    tableM_S_15 &lt;- tableM_S
+    tableM_S_15$`Refraction at 15y` &lt;- refraction(
+      IOL_power = tableM_S_15[,1],
+      K1 = input$K1,
+      K2 = input$K2,
+      ELP = values$ELP_M_S,  
+      AL = AL_15)
+    tableM_S &lt;- as.data.frame(tableM_S)
+    tableM_S[, 1] &lt;- round(tableM_S[, 1], 2)
+    tableM_S[, 2] &lt;- round(tableM_S[, 2], 2)
+    tableM_S_15 &lt;- as.data.frame(tableM_S_15)
+    tableM_S_15[,1] &lt;- round(tableM_S_15[,1],2)
+    tableM_S_15[,2]&lt;- round(tableM_S_15[,2],2)
+    tableM_S_15[,3]&lt;- round(tableM_S_15[,3],2)
+    
+    
+    table_M_P &lt;- data.frame(x = c(NA, NA, NA, NA, NA, NA), 
+                            y = NA, z = NA, d = NA, e = NA, 
+                            f = NA, g =NA, t = NA, n = NA)
+    colnames(table_M_P) &lt;- c("IOL", "IOL Power", "Refraction",
+                             "AL", "K1", "K2", "WTW", "Gender", "ELP")
+    table_M_P$IOL &lt;- "SN60AT/SN60WT"
+    table_M_P$AL &lt;- input$AL
+    table_M_P$K1 &lt;- input$K1
+    table_M_P$K2 &lt;- input$K2
+    table_M_P$WTW &lt;- input$WTW
+    table_M_P$Gender &lt;- input$Gender
+    table_M_P$ELP &lt;- values$ELP_M_P
+    
+    IOLPref0_M_P &lt;- IOL_power_ref_0(AL = input$AL,
+                                    K1 = input$K1,
+                                    K2 = input$K2,
+                                    ELP = values$ELP_M_P)
+    
+    table_M_P[6, 2] &lt;- IOLPref0_M_P 
+    
+    table_M_P[6, 3] &lt;- 0 
+    
+    if(input$ref == 0){
+      
+      med_IOLP_M_P &lt;- as.numeric((round(IOLPref0_M_P/0.5))*0.5)
+      
+      M_P_list &lt;- c(med_IOLP_M_P +1, med_IOLP_M_P+0.5, med_IOLP_M_P, med_IOLP_M_P-0.5,med_IOLP_M_P-1)
+      
+      table_M_P[1:5, 2] &lt;- M_P_list
+      
+      table_M_P[1:5, 3] &lt;- refraction(
+        IOL_power = table_M_P[1:5, 2],
+        K1 = table_M_P[1:5, 5],
+        K2 = table_M_P[1:5, 6],
+        ELP = table_M_P[1:5, 9],  
+        AL = table_M_P[1:5, 4])}else{
+          
+          IOLP_M_P_ref &lt;-   IOL_power_ref(
+            ref = input$ref,
+            K1 = input$K1,
+            K2 = input$K2,
+            ELP = values$ELP_M_P,
+            AL = input$AL
+          )
+          
+          med_IOLP_M_P &lt;- as.numeric((round(IOLP_M_P_ref/0.5))*0.5)
+          
+          M_P_list &lt;- c(med_IOLP_M_P +1, med_IOLP_M_P+0.5, med_IOLP_M_P, med_IOLP_M_P-0.5,med_IOLP_M_P-1)
+          
+          table_M_P[1:5, 2] &lt;- M_P_list
+          
+          table_M_P[1:5, 3] &lt;- refraction(
+            IOL_power = table_M_P[1:5, 2],
+            K1 = table_M_P[1:5, 5],
+            K2 = table_M_P[1:5, 6],
+            ELP = table_M_P[1:5, 9],  
+            AL = table_M_P[1:5, 4])}
+    tableM_P &lt;- table_M_P
+    tableM_P &lt;- tableM_P[, 2:3]
+    tableM_P_15 &lt;- tableM_P
+    tableM_P_15$`Refraction at 15y` &lt;- refraction(
+      IOL_power = tableM_P_15[,1],
+      K1 = input$K1,
+      K2 = input$K2,
+      ELP = values$ELP_M_P,  
+      AL = AL_15)
+    tableM_P &lt;- as.data.frame(tableM_P)
+    tableM_P[, 1] &lt;- round(tableM_P[, 1], 2)
+    tableM_P[, 2] &lt;- round(tableM_P[, 2], 2)
+    tableM_P_15 &lt;- as.data.frame(tableM_P_15)
+    tableM_P_15[,1] &lt;- round(tableM_P_15[,1],2)
+    tableM_P_15[,2]&lt;- round(tableM_P_15[,2],2)
+    tableM_P_15[,3]&lt;- round(tableM_P_15[,3],2)
+    
+    
+    table_C_S &lt;- data.frame(x = c(NA, NA, NA, NA, NA, NA), 
+                            y = NA, z = NA, d = NA, e = NA, 
+                            f = NA, g =NA, t = NA, n = NA)
+    colnames(table_C_S) &lt;- c("IOL", "IOL Power", "Refraction",
+                             "AL", "K1", "K2", "WTW", "Gender", "ELP")
+    table_C_S$IOL &lt;- "SN60AT/SN60WT"
+    table_C_S$AL &lt;- input$AL
+    table_C_S$K1 &lt;- input$K1
+    table_C_S$K2 &lt;- input$K2
+    table_C_S$WTW &lt;- input$WTW
+    table_C_S$Gender &lt;- input$Gender
+    table_C_S$ELP &lt;- values$ELP_C_S
+    
+    IOLPref0_C_S &lt;- IOL_power_ref_0(AL = input$AL,
+                                    K1 = input$K1,
+                                    K2 = input$K2,
+                                    ELP = values$ELP_C_S)
+    
+    table_C_S[6, 2] &lt;- IOLPref0_C_S 
+    
+    table_C_S[6, 3] &lt;- 0 
+    
+    if(input$ref == 0){
+      
+      med_IOLP_C_S &lt;- as.numeric((round(IOLPref0_C_S/0.5))*0.5)
+      
+      C_S_list &lt;- c(med_IOLP_C_S +1, med_IOLP_C_S+0.5, med_IOLP_C_S, med_IOLP_C_S-0.5,med_IOLP_C_S-1)
+      
+      table_C_S[1:5, 2] &lt;- C_S_list
+      
+      table_C_S[1:5, 3] &lt;- refraction(
+        IOL_power = table_C_S[1:5, 2],
+        K1 = table_C_S[1:5, 5],
+        K2 = table_C_S[1:5, 6],
+        ELP = table_C_S[1:5, 9],  
+        AL = table_C_S[1:5, 4])}else{
+          
+          IOLP_C_S_ref &lt;-   IOL_power_ref(
+            ref = input$ref,
+            K1 = input$K1,
+            K2 = input$K2,
+            ELP = values$ELP_C_S,
+            AL = input$AL
+          )
+          
+          med_IOLP_C_S &lt;- as.numeric((round(IOLP_C_S_ref/0.5))*0.5)
+          
+          C_S_list &lt;- c(med_IOLP_C_S +1, med_IOLP_C_S+0.5, med_IOLP_C_S, med_IOLP_C_S-0.5,med_IOLP_C_S-1)
+          
+          table_C_S[1:5, 2] &lt;- C_S_list
+          
+          table_C_S[1:5, 3] &lt;- refraction(
+            IOL_power = table_C_S[1:5, 2],
+            K1 = table_C_S[1:5, 5],
+            K2 = table_C_S[1:5, 6],
+            ELP = table_C_S[1:5, 9],  
+            AL = table_C_S[1:5, 4])}
+    tableC_S &lt;- table_C_S
+    tableC_S &lt;- tableC_S[, 2:3]
+    tableC_S_15 &lt;- tableC_S
+    tableC_S_15$`Refraction at 15y` &lt;- refraction(
+      IOL_power = tableC_S_15[,1],
+      K1 = input$K1,
+      K2 = input$K2,
+      ELP = values$ELP_C_S,  
+      AL = AL_15)
+    tableC_S &lt;- as.data.frame(tableC_S)
+    tableC_S[, 1] &lt;- round(tableC_S[, 1], 2)
+    tableC_S[, 2] &lt;- round(tableC_S[, 2], 2)
+    tableC_S_15 &lt;- as.data.frame(tableC_S_15)
+    tableC_S_15[,1] &lt;- round(tableC_S_15[,1],2)
+    tableC_S_15[,2]&lt;- round(tableC_S_15[,2],2)
+    tableC_S_15[,3]&lt;- round(tableC_S_15[,3],2)
+    
+    
+    table_C_P &lt;- data.frame(x = c(NA, NA, NA, NA, NA, NA), 
+                            y = NA, z = NA, d = NA, e = NA, 
+                            f = NA, g =NA, t = NA, n = NA)
+    colnames(table_C_P) &lt;- c("IOL", "IOL Power", "Refraction",
+                             "AL", "K1", "K2", "WTW", "Gender", "ELP")
+    table_C_P$IOL &lt;- "SN60AT/SN60WT"
+    table_C_P$AL &lt;- input$AL
+    table_C_P$K1 &lt;- input$K1
+    table_C_P$K2 &lt;- input$K2
+    table_C_P$WTW &lt;- input$WTW
+    table_C_P$Gender &lt;- input$Gender
+    table_C_P$ELP &lt;- values$ELP_C_P
+    
+    IOLPref0_C_P &lt;- IOL_power_ref_0(AL = input$AL,
+                                    K1 = input$K1,
+                                    K2 = input$K2,
+                                    ELP = values$ELP_C_P)
+    
+    table_C_P[6, 2] &lt;- IOLPref0_C_P 
+    
+    table_C_P[6, 3] &lt;- 0 
+    
+    if(input$ref == 0){
+      
+      med_IOLP_C_P &lt;- as.numeric((round(IOLPref0_C_P/0.5))*0.5)
+      
+      C_P_list &lt;- c(med_IOLP_C_P +1, med_IOLP_C_P+0.5, med_IOLP_C_P, med_IOLP_C_P-0.5,med_IOLP_C_P-1)
+      
+      table_C_P[1:5, 2] &lt;- C_P_list
+      
+      table_C_P[1:5, 3] &lt;- refraction(
+        IOL_power = table_C_P[1:5, 2],
+        K1 = table_C_P[1:5, 5],
+        K2 = table_C_P[1:5, 6],
+        ELP = table_C_P[1:5, 9],  
+        AL = table_C_P[1:5, 4])}else{
+          
+          IOLP_C_P_ref &lt;-   IOL_power_ref(
+            ref = input$ref,
+            K1 = input$K1,
+            K2 = input$K2,
+            ELP = values$ELP_C_P,
+            AL = input$AL
+          )
+          
+          med_IOLP_C_P &lt;- as.numeric((round(IOLP_C_P_ref/0.5))*0.5)
+          
+          C_P_list &lt;- c(med_IOLP_C_P +1, med_IOLP_C_P+0.5, med_IOLP_C_P, med_IOLP_C_P-0.5,med_IOLP_C_P-1)
+          
+          table_C_P[1:5, 2] &lt;- C_P_list
+          
+          table_C_P[1:5, 3] &lt;- refraction(
+            IOL_power = table_C_P[1:5, 2],
+            K1 = table_C_P[1:5, 5],
+            K2 = table_C_P[1:5, 6],
+            ELP = table_C_P[1:5, 9],  
+            AL = table_C_P[1:5, 4])}
+    tableC_P &lt;- table_C_P
+    tableC_P &lt;- tableC_P[, 2:3]
+    tableC_P_15 &lt;- tableC_P
+    tableC_P_15$`Refraction at 15y` &lt;- refraction(
+      IOL_power = tableC_P_15[,1],
+      K1 = input$K1,
+      K2 = input$K2,
+      ELP = values$ELP_C_P,  
+      AL = AL_15)
+    tableC_P &lt;- as.data.frame(tableC_P)
+    tableC_P[, 1] &lt;- round(tableC_P[, 1], 2)
+    tableC_P[, 2] &lt;- round(tableC_P[, 2], 2)
+    tableC_P_15 &lt;- as.data.frame(tableC_P_15)
+    tableC_P_15[,1] &lt;- round(tableC_P_15[,1],2)
+    tableC_P_15[,2]&lt;- round(tableC_P_15[,2],2)
+    tableC_P_15[,3]&lt;- round(tableC_P_15[,3],2)
+    
+    
+    table_R &lt;- data.frame(x = c(NA, NA, NA, NA, NA, NA), 
+                          y = NA, z = NA, d = NA, e = NA, 
+                          f = NA, g =NA, t = NA, n = NA)
+    colnames(table_R) &lt;- c("IOL", "IOL Power", "Refraction",
+                           "AL", "K1", "K2", "WTW", "Gender", "ALP_O")
+    table_R$IOL &lt;- "SN60AT/SN60WT"
+    table_R$AL &lt;- input$AL
+    table_R$K1 &lt;- input$K1
+    table_R$K2 &lt;- input$K2
+    table_R$WTW &lt;- input$WTW
+    table_R$Gender &lt;- input$Gender
+    table_R$ALP_O &lt;- values$AL_optimized
+    
+    IOLPref0_R &lt;- IOL_power_ref_0_T2(AL = input$AL,
+                                     K1 = input$K1,
+                                     K2 = input$K2,
+                                     AL_O = values$AL_optimized,
+                                     A = 118.3)
+    
+    table_R[6, 2] &lt;- IOLPref0_R 
+    
+    table_R[6, 3] &lt;- 0 
+    
+    if(input$ref == 0){
+      
+      med_IOLP_R &lt;- as.numeric((round(IOLPref0_R/0.5))*0.5)
+      
+      R_list &lt;- c(med_IOLP_R +1, med_IOLP_R+0.5, med_IOLP_R, med_IOLP_R-0.5,med_IOLP_R-1)
+      
+      table_R[1:5, 2] &lt;- R_list
+      
+      table_R[1:5, 3] &lt;- refraction_T2(
+        IOL_power = table_R[1:5, 2],
+        K1 = table_R[1:5, 5],
+        K2 = table_R[1:5, 6],
+        AL_O  = table_R[1:5, 9],  
+        AL = table_R[1:5, 4],
+        A = 118.3)}else{
+          
+          IOLP_R_ref &lt;-   IOL_power_ref_T2(
+            ref = input$ref,
+            K1 = input$K1,
+            K2 = input$K2,
+            AL_O  = values$AL_optimized,
+            AL = input$AL,
+            A = 118.3
+          )
+          
+          med_IOLP_R &lt;- as.numeric((round(IOLP_R_ref/0.5))*0.5)
+          
+          R_list &lt;- c(med_IOLP_R +1, med_IOLP_R+0.5, med_IOLP_R, med_IOLP_R-0.5,med_IOLP_R-1)
+          
+          table_R[1:5, 2] &lt;- R_list
+          
+          table_R[1:5, 3] &lt;- refraction_T2(
+            IOL_power = table_R[1:5, 2],
+            K1 = table_R[1:5, 5],
+            K2 = table_R[1:5, 6],
+            AL_O = table_R[1:5, 9],  
+            AL = table_R[1:5, 4],
+            A = 118.3)
+        }
+    tableR &lt;- table_R
+    tableR &lt;- tableR[, 2:3]
+    tableR_15 &lt;- tableR
+    tableR_15$`Refraction at 15y` &lt;- refraction_T2(
+      IOL_power = tableR_15[,1],
+      K1 = input$K1,
+      K2 = input$K2,
+      AL_O = AL_optimized_15,  
+      AL = AL_15,
+      A = 118.3)
+    tableR &lt;- as.data.frame(tableR)
+    tableR[, 1] &lt;- round(tableR[, 1], 2)
+    tableR[, 2] &lt;- round(tableR[, 2], 2)
+    tableR_15 &lt;- as.data.frame(tableR_15)
+    tableR_15[,1] &lt;- round(tableR_15[,1],2)
+    tableR_15[,2]&lt;- round(tableR_15[,2],2)
+    tableR_15[,3]&lt;- round(tableR_15[,3],2)
+    
+    
+    
+    table &lt;-  if(aa &gt; 15){if(input$procedure == "MCTR" &amp; input$IOL_type == "DCB00/ICB00/ZCB00"){
+      
+      table &lt;- tableM_P
+      
+      
+    } else if(input$procedure == "MCTR" &amp; input$IOL_type == "SN60AT/SN60WF"){
+      
+      table &lt;- tableM_S
+      
+      
+    } else if(input$procedure == "CTR-CH" &amp; input$IOL_type == "DCB00/ICB00/ZCB00"){
+      
+      table &lt;- tableC_P
+      
+      
+    } else if(input$procedure == "CTR-CH" &amp; input$IOL_type == "SN60AT/SN60WF"){
+      
+      table &lt;- tableC_S
+      
+      
+    } else if(input$procedure == "SF-IOL" &amp; input$IOL_type == "Rayner 920H/970C"){
+      
+      table &lt;- tableR
+      
+      
+    }}else{
+      if(clus %in% c("C", "D")){
+        if(input$procedure == "MCTR" &amp; input$IOL_type == "DCB00/ICB00/ZCB00"){
+          
+          table &lt;- tableM_P
+          
+          
+        } else if(input$procedure == "MCTR" &amp; input$IOL_type == "SN60AT/SN60WF"){
+          
+          table &lt;- tableM_S
+          
+          
+        } else if(input$procedure == "CTR-CH" &amp; input$IOL_type == "DCB00/ICB00/ZCB00"){
+          
+          table &lt;- tableC_P
+          
+          
+        } else if(input$procedure == "CTR-CH" &amp; input$IOL_type == "SN60AT/SN60WF"){
+          
+          table &lt;- tableC_S
+          
+          
+        } else if(input$procedure == "SF-IOL" &amp; input$IOL_type == "Rayner 920H/970C"){
+          
+          table &lt;- tableR
+        } 
+      }else{
+        if(input$procedure == "MCTR" &amp; input$IOL_type == "DCB00/ICB00/ZCB00"){
+          
+          table &lt;- tableM_P_15
+          
+          
+        } else if(input$procedure == "MCTR" &amp; input$IOL_type == "SN60AT/SN60WF"){
+          
+          table &lt;- tableM_S_15
+          
+          
+        } else if(input$procedure == "CTR-CH" &amp; input$IOL_type == "DCB00/ICB00/ZCB00"){
+          
+          table &lt;- tableC_P_15
+          
+          
+        } else if(input$procedure == "CTR-CH" &amp; input$IOL_type == "SN60AT/SN60WF"){
+          
+          table &lt;- tableC_S_15
+          
+          
+        } else if(input$procedure == "SF-IOL" &amp; input$IOL_type == "Rayner 920H/970C"){
+          
+          table &lt;- tableR_15
+        }
+      }
+    }
+    table
+    datatable(table,
+              selection = 'none') %&gt;%
+      formatStyle(
+        columns = 1:ncol(table),  # 应用到所有列
+        valueColumns = NULL,           # 或者指定单列：比如 c('column_name')
+        target = 'row',
+        backgroundColor = styleEqual(3, '#D3D3D3')# 第三行的背景颜色加深
+      )%&gt;%
+      formatStyle(
+        columns = 1:ncol(table),  # 应用到所有列
+        valueColumns = NULL,           # 或者指定单列：比如 c('column_name')
+        target = 'row',
+        backgroundColor = styleEqual(6, '#D3D3D3')# 第三行的背景颜色加深
+      )
+    # 返回处理和格式化后的 data.frame，以便用于渲染或传递
+    datatable(table, selection = 'none')
+  })
+  #A = 118.3
+  IOL_types &lt;- eventReactive(input$cal, {
+    IOL_types &lt;- c("PCB00/ZCB00","SN60AT/SN60WF")
+  })
+  words_M_P_val &lt;- eventReactive(input$cal, {
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;MCTR&lt;b&gt;","&lt;br&gt;", 
+                "&lt;br&gt;", 
+                "&lt;b&gt;IOL: &lt;b&gt;", "PCB00/ZCB00",  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Patient: &lt;b&gt;", input$name, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"), "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d")))
+  })
+  words_M_S_val &lt;- eventReactive(input$cal, {
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;MCTR&lt;b&gt;","&lt;br&gt;", 
+                "&lt;br&gt;", 
+                "&lt;b&gt;IOL: &lt;b&gt;", "SN60AT/SN60WF",  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Patient: &lt;b&gt;", input$name, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"), "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d")))
+  })
+  
+  words_C_P_val &lt;- eventReactive(input$cal, {
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;CTR-CH&lt;b&gt;","&lt;br&gt;", 
+                "&lt;br&gt;", 
+                "&lt;b&gt;IOL: &lt;b&gt;", "PCB00/ZCB00",  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Patient: &lt;b&gt;", input$name, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"), "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d")))
+  })
+  words_C_S_val &lt;- eventReactive(input$cal, {
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;CTR-CH&lt;b&gt;","&lt;br&gt;", 
+                "&lt;br&gt;", 
+                "&lt;b&gt;IOL: &lt;b&gt;", "SN60AT/SN60WF",  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Patient: &lt;b&gt;", input$name, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"), "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d")))
+  })
+  words_R_val &lt;- eventReactive(input$cal, {
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;SF-IOL&lt;b&gt;","&lt;br&gt;", 
+                "&lt;br&gt;", 
+                "&lt;b&gt;IOL: &lt;b&gt;", "SN60AT/SN60WF",  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Patient: &lt;b&gt;", input$name, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"), "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d")))
+  })
+  word_val &lt;- eventReactive(input$cal, {
+    
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;Patient: &lt;b&gt;", input$name, "   ","&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"),  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Procedure：&lt;b&gt;",input$procedure,"   ", "&lt;b&gt;IOL: &lt;b&gt;", input$IOL_type,  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "   ","&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d")))
+    
+  })
+  word_val_15 &lt;- eventReactive(input$cal, {
+    values &lt;- calculateValues()
+    aa &lt;- values$aa
+    clus &lt;- values$clus
+    
+    if(aa &lt;= 15){
+      if(clus == "A"){
+        AL_15 &lt;- 1.67 * log10(aa +0.6) +21.71
+      }else{
+        if(clus == "B"){
+          AL_15 &lt;- 7.2 * log10(aa +0.6) +19.69
+        }else{
+          AL_15 &lt;- input$AL
+        }
+      }
+    }else(
+      AL_15 &lt;- input$AL
+    )
+    AL_15 &lt;- round(AL_15, 2)
+    # 构建 words_P 字符串或者 HTML 内容
+    HTML(paste0("&lt;b&gt;Patient: &lt;b&gt;", input$name, "   ","&lt;b&gt;DOB: &lt;b&gt;", format(input$dob, "%Y-%m-%d"),  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Procedure：&lt;b&gt;",input$procedure,"   ", "&lt;b&gt;IOL: &lt;b&gt;", input$IOL_type,  "&lt;br&gt;", 
+                "&lt;br&gt;",
+                "&lt;b&gt;Doctor: &lt;b&gt;", input$surger, "   ","&lt;b&gt;Surgery Date: &lt;b&gt;", format(input$Sob, "%Y-%m-%d"),"&lt;br&gt;",
+                "&lt;br&gt;",
+                "&lt;b&gt;The patient is expected to have AL of &lt;b&gt;", AL_15, "&lt;b&gt;mm at the age of 15&lt;b&gt;"))
+    
+  })
+  
+  #words_M_P,words_M_S,words_C_P, words_C_S, words_R
+  
+  output$table &lt;- renderDataTable({
+    table_reactive()
+  })
+  
+  word_val_ff &lt;- eventReactive(input$cal, {
+    today &lt;- Sys.Date()
+    dob &lt;- as.Date(input$dob)
+    surgery_date &lt;- as.Date(input$Sob)
+    aa &lt;- as.numeric(difftime(surgery_date, dob, units = "days")) / 365.25
+    values &lt;- calculateValues()
+    clus &lt;- values$clus
+    if(clus == "A") {
+      C_ph &lt;-  0
+    } else {
+      if(clus %in% c("C","D")){
+        C_ph &lt;- 3
+      }else{
+        C_ph &lt;- 1
+      }}
+    
+    if( aa &gt;15 ){
+      word_val()
+    }else{
+      if(C_ph == 3){
+        
+        word_val()
+        
+      }else{
+        
+        word_val_15()
+        
+      }
+    }
+    
+  })
+  output$words &lt;- renderUI({
+    word_val_ff()
+  })
+  
+  output$conditional_layout &lt;- renderUI({
+    values &lt;- calculateValues()
+    aa &lt;- values$aa
+    clus &lt;- values$clus
+    
+    if (aa &gt; 15 || clus %in% c("C", "D")) {
+      div(
+        style = "width: 100%; max-width: 1300px; margin: 0 auto;", # 外层容器最大1300px
+        card(
+          style = "width: 100%; max-width: 1300px; margin: 0 auto;", # card充满容器
+          fluidRow(
+            div(
+              style = "width: 600px; margin: 0 auto;", # 固定内容宽度600px
+              uiOutput("words")
+            )
+          ),
+          fluidRow(
+            div(
+              style = "width: 600px; margin: 0 auto;", # 固定内容宽度600px
+              DTOutput("table")
+            )
+          )
+        )
+      )
+    } else {
+      div(
+        style = "width: 100%; max-width: 1300px; margin: 0 auto; margin-top: 20px;",
+        card(
+          fluidRow(
+            div(
+              style = "width: 600px; margin: 0 auto;",
+              uiOutput("words")
+            )
+          ),
+          fluidRow(
+            column(
+              width = 6,
+              div(
+                style = "width: 550px;", # 表格区域固定宽度
+                DTOutput("table")
+              )
+            ),
+            column(
+              width = 6,
+              imageOutput("cluster_image")  # 动态显示图片
+            )
+          )
+        )
+      )
+    }
+  })
+  
+  output$cluster_image &lt;- renderImage({
+    temp_file &lt;- tempfile(fileext = ".png")
+    ggsave(temp_file, img2, width = 10, height = 6)  # 保存 ggplot 对象到文件
+    
+    list(
+      src = temp_file,
+      contentType = "image/png", 
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = T)
+  
+  output$words_cluster &lt;- renderUI({
+    clus &lt;- calculateValues()$clus
+    description &lt;- switch(clus,
+                          "A" = "&lt;div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'&gt;&lt;strong&gt;Cluster A:&lt;/strong&gt; Pediatric patients with nearly normal ocular features. These patients are typically younger and exhibit shorter axial lengths.&lt;/div&gt;",
+                          "B" = "&lt;div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'&gt;&lt;strong&gt;Cluster B:&lt;/strong&gt; Pediatric patients characterized by longer axial lengths and flatter corneas.&lt;/div&gt;",
+                          "C" = "&lt;div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'&gt;&lt;strong&gt;Cluster C:&lt;/strong&gt; Adolescents and adults with moderate axial lengths.&lt;/div&gt;",
+                          "D" = "&lt;div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'&gt;&lt;strong&gt;Cluster D:&lt;/strong&gt; Individuals with significantly longer axial lengths.&lt;/div&gt;",
+                          "&lt;div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'&gt;No cluster information available.&lt;/div&gt;"
+    )
+    HTML(description)
+  })
+  
+  # PCO_sur 输出逻辑
+  output$PCO_sur &lt;- renderImage({
+    temp_file &lt;- tempfile(fileext = ".png")
+    ggsave(temp_file, img1, width = 10, height = 6)  # 保存 ggplot 对象到文件
+    
+    list(
+      src = temp_file,
+      contentType = "image/png", 
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = T)  
+  
+  output$img1_ui &lt;- renderImage({
+    temp_file &lt;- tempfile(fileext = ".png")
+    ggsave(temp_file, img3, width = 5, height = 5)  # 保存 ggplot 对象到文件
+    list(
+      src = temp_file,
+      contentType = "image/png", 
+      style = "display: flex; justify-content: center; align-items: center; max-height: 90%; max-width: 90%; object-fit: contain;"
+    )
+  }, deleteFile = T)
+  
+}
+
+shinyApp(ui = ui, server = server)
+
+</code></pre>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
