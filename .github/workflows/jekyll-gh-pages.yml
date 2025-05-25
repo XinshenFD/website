@@ -1,0 +1,74 @@
+on:
+  push:
+    branches: [main, master]
+  release:
+      types: [published]
+  workflow_dispatch: {}
+
+name: demo-website
+
+jobs:
+  demo-website:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: quarto-website-${{ github.event_name != 'pull_request' || github.run_id }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup pandoc"
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: "Setup R"
+        uses: r-lib/actions/setup-r@v2
+
+      - name: "Setup R dependencies for Quarto's knitr engine"
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            git::https://github.com/posit-dev/r-shinylive
+            knitr
+            rmarkdown
+            downlit
+            xml2
+            remotes
+      # Install and pin the shinylive R package dependency
+      - name: "Setup R dependency for Shinylive App export"
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages:
+            cran::shinylive
+            cran::shinyjs
+            cran::tidyverse
+            cran::magick
+            cran::DT
+            cran::ggplot2
+            cran::bslib
+            
+      - name: "Set up Quarto"
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: "Render working directory"
+        uses: quarto-dev/quarto-actions/render@v2
+        with:
+          target: "all"
+          quiet: false
+
+      - name: "Check generated files"
+        run: |
+          ls -R
+          ls -R _site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+          retention-days: 1
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
