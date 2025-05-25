@@ -8,6 +8,71 @@ filters:
   - shinylive
 ---
 
+
+```{shinylive-r}
+#| standalone: true
+#| viewerHeight: 200
+
+library(shiny)
+library(ggplot2)
+library(shinyjs)
+
+ui <- fluidPage(
+  useShinyjs(),
+  actionButton("cal", "Estimate IOL Power"),
+  imageOutput("img1_ui"),
+  imageOutput("img2_ui"),
+  imageOutput("img3_ui"),
+  uiOutput("words")
+)
+
+server <- function(input, output, session) {
+  rdata_file1 <- tempfile(fileext = ".png")
+  correct_url1 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup1.png"
+  download.file(correct_url1, destfile = rdata_file1, mode = "wb")
+  
+  rdata_file2 <- tempfile(fileext = ".png")
+  correct_url2 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/Logo-Department.png"
+  download.file(correct_url2, destfile = rdata_file2, mode = "wb")
+  
+  rdata_file3 <- tempfile(fileext = ".png")
+  correct_url3 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup2.png"
+  download.file(correct_url3, destfile = rdata_file3, mode = "wb")
+  
+
+  output$img1_ui <- renderImage({
+    list(
+      src = rdata_file1,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = FALSE)
+  output$img2_ui <- renderImage({
+    list(
+      src = rdata_file2,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = FALSE)
+  output$img3_ui <- renderImage({
+    list(
+      src = rdata_file3,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = FALSE)
+  
+  observeEvent(input$cal, {
+    shinyjs::show("img1_ui")
+    output$words <- renderUI({
+      HTML("<b>Calculation completed!</b>")
+    })
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
 ```{shinylive-r}
 #| standalone: true
 #| viewerHeight: 2000
@@ -341,10 +406,10 @@ ui <- page_fixed(
   layout_columns(
     col_widths = c(4, 8),
     card(
-      style = "margin-top: 10px;", # 添加底部间距
+     
       full_screen = TRUE,
-      imageOutput("img1_ui"),
-      style = "height: 300px; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;"
+      imageOutput("img1_ui",, inline = TRUE),
+      style = "margin-top: 10px; display: flex; justify-content: center; align-items: center;"
     ),
     card_body(
       # 使用 HTML 和 CSS 来设置字号、居中、首行缩进和两侧对齐
@@ -407,7 +472,7 @@ ui <- page_fixed(
       ),
       card(
         div(
-          style = "display: flex; justify-content: center; align-items: center; height: 100%;",  
+          style = "margin-top: 10px; display: flex; justify-content: center; align-items: center;",  
           imageOutput("PCO_sur", inline = TRUE)
         )
       )
@@ -423,26 +488,18 @@ ui <- page_fixed(
 
 server <- function(input, output, session) {
 
-  rdata_file1 <- tempfile(fileext = ".png")  # Specify file extension for clarity
+  rdata_file1 <- tempfile(fileext = ".png")
   correct_url1 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup1.png"
-  # Attempt download with corrected URL
   download.file(correct_url1, destfile = rdata_file1, mode = "wb")
-  img1 <- image_read(rdata_file1)
-  img1 <- image_ggplot(img1)
   
-  rdata_file3 <- tempfile(fileext = ".png")  # Specify file extension for clarity
-  correct_url3 <- "https://github.com/XinshenFD/data-save/blob/main/Logo-Department.png?raw=true"
-  # Attempt download with corrected URL
-  download.file(correct_url3, destfile = rdata_file3, mode = "wb")
-  img3 <- image_read(rdata_file3)
-  img3 <- image_ggplot(img3)
-  
-  rdata_file2 <- tempfile(fileext = ".png")  # Specify file extension for clarity
-  correct_url2 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup2.png"
-  # Attempt download with corrected URL
+  rdata_file2 <- tempfile(fileext = ".png")
+  correct_url2 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/Logo-Department.png"
   download.file(correct_url2, destfile = rdata_file2, mode = "wb")
-  img2 <- image_read(rdata_file2)
-  img2 <- image_ggplot(img2)
+  
+  rdata_file3 <- tempfile(fileext = ".png")
+  correct_url3 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup2.png"
+  download.file(correct_url3, destfile = rdata_file3, mode = "wb")
+  
   
   observeEvent(input$procedure, {
     if (input$procedure %in% c("MCTR", "CTR-CH")) {
@@ -1271,53 +1328,112 @@ server <- function(input, output, session) {
   })
   
   output$cluster_image <- renderImage({
-    temp_file <- tempfile(fileext = ".png")
-    ggsave(temp_file, img2, width = 10, height = 6)  # 保存 ggplot 对象到文件
     
     list(
-      src = temp_file,
+      src = rdata_file3,
       contentType = "image/png", 
       style = "width:100%; height:auto;"
     )
-  }, deleteFile = T)
+  }, deleteFile = FALSE)
   
   output$words_cluster <- renderUI({
     clus <- calculateValues()$clus
     description <- switch(clus,
-                          "A" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster A:</strong> Pediatric patients with nearly normal ocular features. These patients are typically younger and exhibit shorter axial lengths.</div>",
-                          "B" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster B:</strong> Pediatric patients characterized by longer axial lengths and flatter corneas.</div>",
-                          "C" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster C:</strong> Adolescents and adults with moderate axial lengths.</div>",
-                          "D" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster D:</strong> Individuals with significantly longer axial lengths.</div>",
+                          "A" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster A:</strong> Pediatric Patients with Ectopia Lentis and Minimal Other Ocular Features of Marfan Syndrome. This subtype primarily includes children under 12 years of age whose axial length (AL) is generally within the normal range for age. Some patients may exhibit mildly elongated AL but lack other characteristic features such as corneal flattening or thinning. Postoperative visual recovery in this group tends to be faster compared to Type B patients. The incidence of posterior capsular opacification (PCO) is similar to that of Type B, with approximately 30% requiring Nd:YAG laser treatment within two years after surgery.</div>",
+                          "B" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster B:</strong> Pediatric Patients with Ectopia Lentis, Long Axial Length, Flat Cornea, and Thin Cornea. Also primarily involving children under 12 years, this subtype is characterized by significantly elongated AL compared to age-matched norms. Some patients may present with normal AL but exhibit other features such as a flatter and thinner cornea. Compared to Type A, visual recovery is slower in this group, while the incidence of PCO remains comparable, with about 30% of patients requiring laser capsulotomy within two years postoperatively.</div>",
+                          "C" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster C:</strong> Adolescent and Adult Patients with Ectopia Lentis and Normal to Moderately Long Axial Length. This group includes patients aged 12 years and older, with axial lengths typically not exceeding 28 mm. Postoperative visual recovery in this subtype is the most rapid among all clusters, and the incidence of PCO is the lowest, with only approximately 13% of patients requiring laser treatment within two years after surgery.</div>",
+                          "D" = "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'><strong>Cluster D:</strong> Patients with Ectopia Lentis and Markedly Elongated Axial Length. This subtype includes adults with AL greater than 28 mm and children whose AL is substantially longer than age-matched peers. These patients show the slowest postoperative visual improvement and the highest risk of PCO, with approximately 45% requiring Nd:YAG laser capsulotomy within two years postoperatively.</div>",
                           "<div style='text-align:justify;text-justify:inter-ideograph;margin:0 auto;max-width:90%'>No cluster information available.</div>"
     )
     HTML(description)
   })
   
   # PCO_sur 输出逻辑
-  output$PCO_sur <- renderImage({
-    temp_file <- tempfile(fileext = ".png")
-    ggsave(temp_file, img1, width = 10, height = 6)  # 保存 ggplot 对象到文件
-    
+  output$PCO_sur <- -renderImage({
     list(
-      src = temp_file,
-      contentType = "image/png", 
+      src = rdata_file1,
+      contentType = "image/png",
       style = "width:100%; height:auto;"
     )
-  }, deleteFile = T)  
+  }, deleteFile = FALSE)
   
-  output$img1_ui <- renderImage({
-    temp_file <- tempfile(fileext = ".png")
-    ggsave(temp_file, img3, width = 5, height = 5)  # 保存 ggplot 对象到文件
+  output$img1_ui <-renderImage({
     list(
-      src = temp_file,
-      contentType = "image/png", 
-      style = "display: flex; justify-content: center; align-items: center; max-height: 90%; max-width: 90%; object-fit: contain;"
+      src = rdata_file2,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
     )
-  }, deleteFile = T)
+  }, deleteFile = FALSE)
+  
   
 }
 
 shinyApp(ui = ui, server = server)
 
 
+```
+
+
+```{shinylive-r}
+#| standalone: true
+#| viewerHeight: 200
+
+library(shiny)
+library(ggplot2)
+library(shinyjs)
+
+ui <- fluidPage(
+  useShinyjs(),
+  actionButton("cal", "Estimate IOL Power"),
+  imageOutput("img1_ui"),
+  imageOutput("img2_ui"),
+  imageOutput("img3_ui"),
+  uiOutput("words")
+)
+
+server <- function(input, output, session) {
+  rdata_file1 <- tempfile(fileext = ".png")
+  correct_url1 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup1.png"
+  download.file(correct_url1, destfile = rdata_file1, mode = "wb")
+  
+  rdata_file2 <- tempfile(fileext = ".png")
+  correct_url2 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/Logo-Department.png"
+  download.file(correct_url2, destfile = rdata_file2, mode = "wb")
+  
+  rdata_file3 <- tempfile(fileext = ".png")
+  correct_url3 <- "https://raw.githubusercontent.com/XinshenFD/data-save/main/sup2.png"
+  download.file(correct_url3, destfile = rdata_file3, mode = "wb")
+  
+
+  output$img1_ui <- renderImage({
+    list(
+      src = rdata_file1,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = FALSE)
+  output$img2_ui <- renderImage({
+    list(
+      src = rdata_file2,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = FALSE)
+  output$img3_ui <- renderImage({
+    list(
+      src = rdata_file3,
+      contentType = "image/png",
+      style = "width:100%; height:auto;"
+    )
+  }, deleteFile = FALSE)
+  
+  observeEvent(input$cal, {
+    shinyjs::show("img1_ui")
+    output$words <- renderUI({
+      HTML("<b>Calculation completed!</b>")
+    })
+  })
+}
+
+shinyApp(ui = ui, server = server)
 ```
